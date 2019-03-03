@@ -98,14 +98,22 @@ void hash_write_file(std::string fileName, std::vector<std::string>& fileNames, 
 }
 
 // read hash small file
-void read_hash_file(const std::vector<std::string>& fileNames, std::vector<std::pair<std::string, int>>& vec_pair, size_t bucketDataSize) {
+void read_hash_file(const std::vector<std::string>& fileNames, std::vector<std::pair<std::string, int>>& vec_pair, size_t bucketDataSize,
+                   size_t parentFileSize) {
     std::unordered_map<std::string, int>::iterator unorder_map_it;
     ifstream ifstrm;
     for (int i = 0; i < fileNames.size(); ++i) {
         size_t bucket_num = 0;
+        size_t fileSize = GetFileByteSize(fileNames[i]);
         std::unordered_map<std::string, int> unorder_map;
         bucket_num = GetBucketNumber(fileNames[i], bucketDataSize);
-        if (bucket_num == 1) {
+        // filesize < bucketDataSize or subFileSize == parentFileSize (url all is same)
+        if (bucket_num == 1 || parentFileSize == fileSize) {
+            /*
+            if (parentFileSize == fileSize) {
+                std::cout << "parentFileSize == fileSize" << std::endl;
+            }
+             */
             ifstrm.open(fileNames[i]);
             if (ifstrm.is_open()) {
                 std::string str;
@@ -131,7 +139,7 @@ void read_hash_file(const std::vector<std::string>& fileNames, std::vector<std::
             std::vector<std::string> SubFileNames;
             // std::cout << "bucket_num: " << bucket_num << std::endl;
             hash_write_file(fileNames[i], SubFileNames, bucket_num, fileNames[i]);
-            read_hash_file(SubFileNames, vec_pair, bucketDataSize);
+            read_hash_file(SubFileNames, vec_pair, bucketDataSize, fileSize);
         }
     }
 }
@@ -154,16 +162,17 @@ int main(int argc, const char * argv[]) {
     
     // deal bucket number
     const size_t bucketDataSize = 1024 * 1024 * MNum; // 5M
-    std::cout << "bucketDataSize: " << bucketDataSize << std::endl;
+    // std::cout << "bucketDataSize: " << bucketDataSize << std::endl;
     try {
         bucket_num = GetBucketNumber(argv[1], bucketDataSize);
+        size_t fileSize = GetFileByteSize(argv[1]);
         // std::cout << "bucket_num: " << bucket_num << endl;
         std::vector<std::string> fileNames;
         hash_write_file(argv[1], fileNames, bucket_num, "base");
         
         std::vector<std::pair<std::string, int>> vec_pair;
         // read hash file
-        read_hash_file(fileNames, vec_pair, bucketDataSize);
+        read_hash_file(fileNames, vec_pair, bucketDataSize, fileSize);
         
         int KNum = TOP_K;
         CTopK<std::vector<std::pair<std::string, int>>::iterator> CTopK_vt;
