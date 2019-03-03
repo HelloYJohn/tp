@@ -19,6 +19,7 @@ public:
     ~CTopK();
     T*  m_Data;
     int GetTopK(std::unordered_map<std::string, int>& unorder_map, int& nTop);
+    int GetTopK(std::vector<std::pair<std::string, int>>& pair_vt, int& nTop);
 private:
     void Clear();
     void HeapAdjust(int nStart, int nLen);
@@ -94,6 +95,57 @@ int CTopK<T>::GetTopK(std::unordered_map<std::string, int>& unorder_map, int& nT
                 HeapAdjust(0, nTop);
             }
             ++unorder_map_it;
+        }
+    }
+    
+    return 0;
+}
+
+// get top k
+template<class T>
+int CTopK<T>::GetTopK(std::vector<std::pair<std::string, int>>& pair_vt, int& nTop) {
+    int i = 0;
+    
+    // parameter check
+    if (nTop <= 0)
+    {
+        return -1;
+    }
+    
+    // clear
+    Clear();
+    
+    // alloc space
+    m_Data = new T[nTop];
+    if (NULL == m_Data)
+    {
+        return -1;
+    }
+    
+    //read topk date
+    std::vector<std::pair<std::string, int>>::iterator pair_vt_it = pair_vt.begin();
+    for (i = 0; i < nTop; i++) {
+        if (pair_vt_it != pair_vt.end()) {
+            m_Data[i] = pair_vt_it++;
+        }
+        else {
+            break;
+        }
+    }
+    
+    // deal i <  nTop
+    if (i < nTop) {
+        nTop = i;
+    } else {
+        BuildHeap(nTop);
+        
+        while (pair_vt_it != pair_vt.end()) {
+            if (CompareGreater(pair_vt_it, m_Data[0])) {
+                //swap and adjust heap
+                m_Data[0] = pair_vt_it;
+                HeapAdjust(0, nTop);
+            }
+            ++pair_vt_it;
         }
     }
     

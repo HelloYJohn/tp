@@ -126,6 +126,7 @@ void read_hash_file(const std::vector<std::string>& fileNames, std::vector<std::
             for (int i = 0; i < KNum; ++i) {
                 vec_pair.push_back({CTopK_unorder_map_it.m_Data[i]->first, CTopK_unorder_map_it.m_Data[i]->second});
             }
+            
         } else {
             std::vector<std::string> SubFileNames;
             // std::cout << "bucket_num: " << bucket_num << std::endl;
@@ -164,14 +165,16 @@ int main(int argc, const char * argv[]) {
         // read hash file
         read_hash_file(fileNames, vec_pair, bucketDataSize);
         
-        std::sort(vec_pair.begin(), vec_pair.end(), SortByPair);
-        size_t numCount = vec_pair.size() < TOP_K ? vec_pair.size() : TOP_K;
+        int KNum = TOP_K;
+        CTopK<std::vector<std::pair<std::string, int>>::iterator> CTopK_vt;
+        std::vector<std::pair<std::string, int>>::iterator CTopK_vt_it;
+        CTopK_vt.GetTopK(vec_pair, KNum);
         ofstream ofstream;
         ofstream.open("result");
         if (ofstream.is_open()) {
-            for (int i = 0; i < numCount; i++) {
-                // std::cout << vec_pair[i].second << " " << vec_pair[i].first << endl;
-                ofstream << vec_pair[i].second << " " << vec_pair[i].first << endl;
+            for (int i = 0; i < KNum; i++) {
+                // std::cout << CTopK_vt.m_Data[i]->second << " " << CTopK_vt.m_Data[i]->first << endl;
+                ofstream << CTopK_vt.m_Data[i]->second << " " << CTopK_vt.m_Data[i]->first << endl;
             }
         }
         ofstream.close();
